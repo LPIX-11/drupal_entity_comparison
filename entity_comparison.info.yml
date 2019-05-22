@@ -1,0 +1,11 @@
+name: Entity comparison
+type: module
+description: Allows user to compare entities.
+# core: 8.x
+package: Entity
+
+# Information added by Drupal.org packaging script on 2017-04-10
+version: '8.x-1.0-beta1'
+core: '8.x'
+project: 'entity_comparison'
+datestamp: 1491833346
