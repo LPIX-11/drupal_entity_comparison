@@ -17,6 +17,11 @@ use Drupal\Core\Render\RendererInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
 
+/**
+ * @contrib Mohamed Johnson
+ * If you want non authentificated users to access to the entity comparison's behaviors
+ * Go on the admin dashboard and edit the anonymous user's roles to be able to access the module
+ */
 class EntityComparisonController extends ControllerBase implements ContainerInjectionInterface {
 
   /**
@@ -82,7 +87,7 @@ class EntityComparisonController extends ControllerBase implements ContainerInje
 
   /**
    * Display the markup.
-   *
+   * @contrib Mame Khady Diouf
    * @param $entity_comparison_id
    * @param $entity_id
    * @param \Symfony\Component\HttpFoundation\Request $request
@@ -91,48 +96,26 @@ class EntityComparisonController extends ControllerBase implements ContainerInje
    */
   public function action($entity_comparison_id, $entity_id, Request $request) {
 
-    $entity_comparison = EntityComparison::load($entity_comparison_id);
+     $entity_comparison = EntityComparison::load($entity_comparison_id);
 
     // Process the current request
     $this->processRequest($entity_comparison, $entity_id);
 
     // Get destination
     $destination = $request->query->get('destination');
-    $destination = 'internal:' . $destination;
-    // Get route from the uri
-    $redirect_url = Url::fromUri($destination);
 
     // Redirect back the user
-    return $this->redirect($redirect_url->getRouteName(), $redirect_url->getRouteParameters());
+    return new RedirectResponse($destination);
 
-/*
-    if ($request->get(MainContentViewSubscriber::WRAPPER_FORMAT) == 'drupal_ajax') {
-      // Create a new AJAX response.
-      $response = new AjaxResponse();
-
-      // Generate the link render array.
-      $link = $entity_comparison->getLink($entity_id);
-
-      // Generate a CSS selector to use in a JQuery Replace command.
-      $selector = '#entity-comparison-' . $entity_comparison->id() . '-' . $entity_id;
-
-      // Create a new JQuery Replace command to update the link display.
-      $replace = new ReplaceCommand($selector, $this->renderer->renderPlain($link));
-      $response->addCommand($replace);
-
-      return $response;
-    }
-    else {
-      return $this->redirect($redirect_url->getRouteName(), $redirect_url->getRouteParameters());
-    }
-*/
   }
 
   /**
    * Process the request
-   *
+   * @contrib Mohamed Johnson
    * @param $entity_comparison
    * @param $entity_id
+   *
+   * @retrun Drupal Message
    */
   protected function processRequest(EntityComparisonInterface $entity_comparison, $entity_id) {
 
@@ -173,10 +156,10 @@ class EntityComparisonController extends ControllerBase implements ContainerInje
 
         // Add to the list
         $entity_comparison_list[$entity_type][$bundle_type][$entity_comparison->id()][] = $entity_id;
-        // drupal_set_message($this->t("You have successfully added %entity_name to %entity_comparison list.", array(
-        //   '%entity_name' => $entity->label(),
-        //   '%entity_comparison' => $entity_comparison->label(),
-        // )));
+        drupal_set_message($this->t("You have successfully added %entity_name to %entity_comparison list.", array(
+          '%entity_name' => $entity->label(),
+          '%entity_comparison' => $entity_comparison->label(),
+        )));
       } else {
         drupal_set_message($this->t("You can only add @limit items to the %entity_comparison list.", array(
           '@limit' => $limit,
@@ -187,10 +170,10 @@ class EntityComparisonController extends ControllerBase implements ContainerInje
     } else{
       $key = array_search($entity_id, $entity_comparison_list[$entity_type][$bundle_type][$entity_comparison->id()]);
       unset($entity_comparison_list[$entity_type][$bundle_type][$entity_comparison->id()][$key]);
-      // drupal_set_message($this->t("You have successfully removed %entity_name from %entity_comparison.", array(
-      //   '%entity_name' => $entity->label(),
-      //   '%entity_comparison' => $entity_comparison->label(),
-      // )));
+      drupal_set_message($this->t("You have successfully removed %entity_name from %entity_comparison.", array(
+        '%entity_name' => $entity->label(),
+        '%entity_comparison' => $entity_comparison->label(),
+      )));
     }
 
     $this->session->set('entity_comparison_' . $uid, $entity_comparison_list);
@@ -198,7 +181,7 @@ class EntityComparisonController extends ControllerBase implements ContainerInje
 
   /**
    * Compare page
-   *
+   * @contrib Mohamed Johnson
    * @return array
    */
   public function compare() {
@@ -263,8 +246,8 @@ class EntityComparisonController extends ControllerBase implements ContainerInje
 
       }
 
-      // If there are at more or 2 entities in the list
-      if ( count($entities) >= 2 ) {
+      // If there are at least 1 entity in the list
+      if ( count($entities) ) {
         // Add the first row, where user can remove the selected content fro the list
         $row = array($this->t("Remove from the list"));
         foreach(Element::children($entities) as $key) {
@@ -294,10 +277,12 @@ class EntityComparisonController extends ControllerBase implements ContainerInje
           $rows[] = $row;
         }
       }
-      // If there are at less than 2 entities redirect to the front page
-      else {
-        header('location: /'); exit;
-      }
+      // Activate this to redirect the user entity's found on the bundle's list
+      
+      // If there are no entities redirect to the front page
+      // else {
+      //    header('location: /'); exit;
+      // }
     }
 
     return array(
